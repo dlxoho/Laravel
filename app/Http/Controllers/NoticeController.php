@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\NoticeRequest;
 use App\Models\Notice;
 use App\Models\NoticeFile;
+use App\Service\NoticeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -11,6 +13,13 @@ use Illuminate\Support\Facades\Validator;
 
 class NoticeController extends Controller
 {
+  protected NoticeService $noticeService;
+
+  public function __construct(NoticeService $noticeService)
+  {
+    $this->noticeService = $noticeService;
+  }
+
   public function getList(Request $request)
   {
     $rows = Notice::from('notice as n')
@@ -18,20 +27,20 @@ class NoticeController extends Controller
       ->select('n.*,u.name,u.userID');
 
     if ($request->has('title')) {
-      $rows->where('n.title','like','%'. $request->input('title') .'%');
+      $rows->where('n.title', 'like', '%' . $request->input('title') . '%');
     }
 
     if ($request->has('content')) {
-      $rows->where('n.content','like','%'. $request->input('content') .'%');
+      $rows->where('n.content', 'like', '%' . $request->input('content') . '%');
     }
 
     if ($request->has('u.userID')) {
-      $rows->where('u.userID',$request->input('u.userID'));
+      $rows->where('u.userID', $request->input('u.userID'));
     }
 
     if ($request->has('orderby')) {
       $orderby = explode('|', $request->input('orderby'));
-      $rows->orderBy($orderby[0],$orderby[1]);
+      $rows->orderBy($orderby[0], $orderby[1]);
     } else {
       $rows->orderBy('n.created_at', 'desc');
     }
@@ -44,55 +53,10 @@ class NoticeController extends Controller
     ]);
   }
 
-  public function store(Request $request)
+  public function store(NoticeRequest $request)
   {
-    $validator = Validator::make($request->all(), [
-      'title' => 'required|string|max:255',
-      'content' => 'required',
-      'originFiles' => 'nullable|array',
-      'files' => 'nullable|array',
-    ]);
-
-    if ($validator->fails()) {
-      return response()->json([
-        'errors' => $validator->errors()->toArray()
-      ],422);
-    }
-
-    DB::beginTransaction();
-    try {
-      $notice = Notice::create([
-        'title' => $request->input('title'),
-        'content' => $request->input('content'),
-        'user_id' => Auth::user()->id,
-        'created_at' => now()
-      ]);
-
-      if ($request->has('originFiles') && $request->has('files')) {
-        $originFiles = $request->input('originFiles');
-        $files = $request->input('files');
-
-        foreach ($files as $idx => $file) {
-          NoticeFile::create([
-            'notice_file_id' => $notice->id,
-            'file_name' => $file,
-            'origin_file_name' => $originFiles[$idx],
-            'created_at' => now()
-          ]);
-        }
-      }
-
-      DB::commit();
-      return response()->json([
-        'resultMessage' => 'success'
-      ],201);
-
-    } catch (\Exception $e) {
-      DB::rollBack();
-      return response()->json([
-        'resultMessage' => $e->getMessage()
-      ],500);
-    }
+    $result = $this->noticeService->storeNoticeWithFiles($request);
+    return response()->json($result, $result['resultCode']);
   }
 
   public function update(Notice $notice, Request $request)
@@ -107,7 +71,7 @@ class NoticeController extends Controller
     if ($validator->fails()) {
       return response()->json([
         'errors' => $validator->errors()->toArray()
-      ],422);
+      ], 422);
     }
 
     DB::beginTransaction();
@@ -118,7 +82,7 @@ class NoticeController extends Controller
         'updated_at' => now()
       ]);
 
-      NoticeFile::where('notice_id',$notice->notice_id)->delete();
+      NoticeFile::where('notice_id', $notice->notice_id)->delete();
 
       if ($request->has('originFiles') && $request->has('files')) {
         $originFiles = $request->input('originFiles');
@@ -137,13 +101,13 @@ class NoticeController extends Controller
       DB::commit();
       return response()->json([
         'resultMessage' => 'success'
-      ],201);
+      ], 201);
 
     } catch (\Exception $e) {
       DB::rollBack();
       return response()->json([
         'resultMessage' => $e->getMessage()
-      ],500);
+      ], 500);
     }
   }
 
@@ -151,7 +115,7 @@ class NoticeController extends Controller
   {
     DB::beginTransaction();
     try {
-      NoticeFile::where('notice_id',$notice->id)->delete();
+      NoticeFile::where('notice_id', $notice->id)->delete();
       $notice->delete();
 
       $resultMessage = 'success';
@@ -165,7 +129,7 @@ class NoticeController extends Controller
 
     return response()->json([
       'resultMessage' => $resultMessage
-    ],$statusCode);
+    ], $statusCode);
   }
 
   public function detail(Notice $notice)
