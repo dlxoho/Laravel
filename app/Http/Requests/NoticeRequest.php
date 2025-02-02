@@ -8,15 +8,15 @@ class NoticeRequest extends FormRequest
 {
   public function authorize()
   {
-    return false;
+    return true;
   }
   public function rules()
   {
     return [
       'title' => 'required|string|max:255',
       'content' => 'required',
-      'originFiles' => 'nullable|array',
-      'files' => 'nullable|array',
+      'originFiles' => 'nullable',
+      'files' => 'nullable',
     ];
   }
 }
