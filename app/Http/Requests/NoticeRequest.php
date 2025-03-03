@@ -19,4 +19,12 @@ class NoticeRequest extends FormRequest
       'files' => 'nullable',
     ];
   }
+
+  public function messages()
+  {
+    return [
+      'title.required' => "제목은 필수 값 입니다.",
+      'content.required' => "내용은 필수 값 입나다.",
+    ];
+  }
 }

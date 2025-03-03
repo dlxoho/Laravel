@@ -4,18 +4,42 @@ namespace App\Service;
 
 use App\Models\Notice;
 use App\Models\NoticeFile;
+use App\Repository\NoticeFileRepository;
+use App\Repository\NoticeRepository;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class NoticeService
 {
+  // 구현체가 아닌 Repository 인터페이스를 의존하는 이유
+  // SOLID 원칙 중 DIP(의존성 역전 원칙) - 상위모듈은 하위모듈에 의존하지말고 인터페이스에 의존해야한다.
+  // 특정 구현체에 의존하는게 아닌 인터페이스를 의존하게되면, 구현제를 쉽게 갈아 끼울수있음 (수정에 쉽게 대처가 가능하다)
+  private NoticeRepository $noticeRepository;
+  private NoticeFileRepository $noticeFileRepository;
+
+  public function __construct(NoticeRepository $noticeRepository, NoticeFileRepository $noticeFileRepository)
+  {
+    $this->noticeRepository = $noticeRepository;
+    $this->noticeFileRepository = $noticeFileRepository;
+  }
+
   public final function storeNoticeWithFiles(array $data)
   {
     DB::beginTransaction();
     try {
-      $notice = $this->storeNotice($data);
-      $this->storeNoticeFiles($notice->notice_id, $data);
+      $notice_data = [
+        'title' => $data['title'],
+        'content' => $data['content'],
+        'user_id' => Auth::id(),
+        'created_at' => now(),
+      ];
+      $notice = $this->noticeRepository->create($notice_data);
+
+      if (!empty($data['files']) && !empty($data['originFiles'])) {
+        $this->noticeFileRepository->storeFile($data['files'], $data['originFiles'], $notice->notice_id);
+      }
+
       DB::commit();
       return [
         'resultMessage' => 'SUCCESS',
@@ -30,55 +54,9 @@ class NoticeService
     }
   }
 
-  private function storeNoticeFiles($notice_id, array $data)
-  {
-    if (isset($data['files']) && isset($data['originFiles'])) {
-      foreach ($data['files'] as $idx => $file) {
-        $originFile = $data['originFiles'][$idx];
-        NoticeFile::create([
-          'notice_id' => $notice_id,
-          'file_name' => $file,
-          'origin_file_name' => $originFile,
-          'created_at' => now()
-        ]);
-      }
-    }
-  }
-
-  private function storeNotice(array $data)
-  {
-    return Notice::create([
-      'title' => $data['title'],
-      'content' => $data['content'],
-      'user_id' => Auth::user()->id ?? 'taeho',
-      'created_at' => now()
-    ]);
-  }
-
   public final function getNotices(array $data)
   {
-    $rows = Notice::from('notice as n')
-      ->join('user as u', 'u.user_id', 'n.user_id')
-      ->select('n.*,u.name,u.userID');
-
-    if ($data && isset($data['title'])) {
-      $rows = $rows->where('n.title', 'like', '%' . $data['title'] . '%');
-    }
-    if ($data && isset($data['content'])) {
-      $rows = $rows->where('n.content', 'like', '%' . $data['content'] . '%');
-    }
-    if ($data && isset($data['userID'])) {
-      $rows = $rows->where('n.userID', 'like', '%' . $data['userID'] . '%');
-    }
-    if ($data && isset($data['orderby'])) {
-      $orderby = explode('|', $data['orderby']);
-      $rows = $rows->orderBy($orderby[0], $orderby[1]);
-    } else {
-      $rows = $rows->orderBy('n.created_at', 'desc');
-    }
-
-    $rows->paginate(15);
-    return $rows;
+    return $this->noticeRepository->list($data);
   }
 
   public final function modifyNotice(Notice $notice, array $data)
@@ -109,8 +87,8 @@ class NoticeService
   {
     DB::beginTransaction();
     try {
-      $this->deleteNotice($notice);
-      $this->deleteNoticeFiles($notice->notice_id);
+      $this->noticeRepository->delete($notice->notice_id);
+      $this->noticeFileRepository->deleteFiles($notice->notice_id);
       DB::commit();
       return [
         'resultMessage' => 'SUCCESS',
@@ -125,20 +103,10 @@ class NoticeService
     }
   }
 
-  private function deleteNotice(Notice $notice)
-  {
-    $notice->delete();
-  }
-
-  private function deleteNoticeFiles($notice_id)
-  {
-    NoticeFile::where('notice_id', $notice_id)->delete();
-  }
-
   public final function show(Notice $notice)
   {
     try {
-      $noticeFiles = Notice::with('noticeFiles')->find($notice);
+      $noticeFiles = $this->noticeRepository->show($notice->notice_id);
       return [
         'resultMessage' => 'SUCCESS',
         'data' => [
@@ -147,7 +115,7 @@ class NoticeService
         ],
         'resultCode' => 200
       ];
-    } catch (ModelNotFoundException $e) {
+    } catch (\Exception $e) {
       return [
         'resultMessage' => $e->getMessage(),
         'resultCode' => 404
@@ -158,7 +126,7 @@ class NoticeService
   public final function addHit(Notice $notice)
   {
     try {
-      $notice->increment('hits');
+      $this->noticeRepository->addHit($notice->notice_id);
       return [
         'resultMessage' => 'SUCCESS',
         'resultCode' => 200
