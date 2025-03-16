@@ -16,8 +16,9 @@ class NoticeFile extends Model
   protected $fillable = [
     'notice_id',
     'notice_file_id',
-    'file_name',
-    'origin_file_name',
+    'saved_file',
+    'origin_file',
+    'file_path',
     'created_at'
   ];
   public $timestamps = false;
