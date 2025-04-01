@@ -8,6 +8,8 @@ class NoticeRequest extends FormRequest
 {
   public function authorize()
   {
+    // true : 권한 없어도 괜찮음
+    // false : 권한 필요
     return true;
   }
   public function rules()
