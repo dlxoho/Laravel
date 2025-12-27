@@ -9,7 +9,7 @@ class ProductFile extends Model
 {
   use HasFactory;
   protected $primaryKey = 'product_file_id';
-  protected $table = 'productFile';
+  protected $table = 'product_file';
   protected $fillable = [
     'product_id',
     'product_file_id',

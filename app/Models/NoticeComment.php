@@ -10,7 +10,7 @@ class NoticeComment extends Model
 {
     use HasFactory, TimestampTrait;
 
-    protected $table = 'noticeComment';
+    protected $table = 'notice_comment';
     protected $primaryKey = 'notice_comment_id';
     public $timestamps = false;
     protected $fillable = [

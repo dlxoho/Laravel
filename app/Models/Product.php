@@ -12,14 +12,13 @@ class Product extends Model
   protected $table = "product";
   protected $primaryKey = "product_id";
   public $timestamps = false;
-  protected $fillable = [
+  protected $fillable = array(
     'product_id',
-    'product_name',
-    'customer_id',
     'product_name',
     'product_status',
     'price',
     'purchase_price',
-    'hits'
-  ];
+    'hits',
+    'created_at',
+  );
 }

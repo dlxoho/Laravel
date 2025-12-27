@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 class NoticeFile extends Model
 {
   use HasFactory;
-  protected $table = 'notice_files';
+  protected $table = 'notice_file';
   protected $primaryKey = 'notice_file_id';
   protected $fillable = [
     'notice_id',
