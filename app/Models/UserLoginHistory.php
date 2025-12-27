@@ -9,7 +9,7 @@ class UserLoginHistory extends Model
 {
     use HasFactory;
 
-    protected $table = 'userLoginHistory';
+    protected $table = 'user_login_history';
     protected $primaryKey = 'user_login_history_id';
     public $incrementing = false;
     protected $fillable = [

@@ -2,8 +2,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NoticeController;
 
-// version 0
-
+// version 1
 Route::controller(NoticeController::class)->group(function () {
   // list
   Route::get('/notices','getList');
