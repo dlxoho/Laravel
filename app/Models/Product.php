@@ -16,9 +16,14 @@ class Product extends Model
     'product_id',
     'product_name',
     'product_status',
+    'product_category',
     'price',
     'purchase_price',
     'hits',
     'created_at',
   );
+
+  public function productFiles () {
+    return $this->hasMany(ProductFile::class, 'product_id') ;
+  }
 }

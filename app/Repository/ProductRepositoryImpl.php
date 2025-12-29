@@ -25,7 +25,7 @@ class ProductRepositoryImpl implements ProductRepository
 
   public function show(int $product_id)
   {
-    return Product::find($product_id);
+    return Product::with('productFiles')->find($product_id);
   }
 
   public function addHit(int $product_id)
@@ -43,6 +43,9 @@ class ProductRepositoryImpl implements ProductRepository
     }
     if ($data && isset($data['product_status'])) {
       $rows = $rows->where('product_status',$data['product_status']);
+    }
+    if ($data && isset($data['product_category'])) {
+      $rows = $rows->where('product_category',$data['product_category']);
     }
 
     return $rows->orderBy('created_at','desc')->paginate(10);

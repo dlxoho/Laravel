@@ -1,4 +1,6 @@
 <?php
+
+use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NoticeController;
 
@@ -16,4 +18,9 @@ Route::controller(NoticeController::class)->group(function () {
   Route::put('/notice/{notice}','update');
   // add hits
   Route::put('/notice/{notice}/hits','addHit');
+});
+
+
+Route::controller(ProductController::class)->group(function () {
+  
 });
