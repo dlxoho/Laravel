@@ -19,12 +19,12 @@ return new class extends Migration {
       $table->unsignedInteger('price')->default(0);
       $table->unsignedInteger('purchase_price')->default(0);
       $table->unsignedInteger('hits')->default(0);
-      $table->string('product_category', 45);
+      $table->unsignedInteger('category_id');
       $table->timestamp('created_at')->usecurrent();
 
       $table->index('product_name');
       $table->index('product_status');
-      $table->index('product_category');
+      $table->index('category_id');
     });
   }
 
