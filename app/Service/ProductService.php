@@ -3,15 +3,18 @@
 namespace App\Service;
 
 use App\Models\Product;
+use App\Repository\ProductFileRepository;
 use App\Repository\ProductRepository;
 use Illuminate\Support\Facades\DB;
 
 class ProductService
 {
   private ProductRepository $productRepository;
+  private ProductFileRepository $productFileRepository;
 
-  public function __construct(ProductRepository $productRepository) {
+  public function __construct(ProductRepository $productRepository, ProductFileRepository $productFileRepository) {
     $this->productRepository = $productRepository;
+    $this->productFileRepository = $productFileRepository;
   }
 
   public function getProducts(array $data) {
@@ -62,7 +65,7 @@ class ProductService
         'product_category' => $data['product_category'],
         'purchase_price' => $data['purchase_price']
       ]);
-
+      $this->productFileRepository($product->product_id);
       DB::commit();
       return [
         'resultMessage' => 'SUCCESS',
@@ -78,13 +81,17 @@ class ProductService
   }
 
   public function deleteProduct(Product $product) {
+    DB::beginTransaction();
     try {
       $this->productRepository->delete($product->product_id);
+      $this->productFileRepository->deleteFile($product->product_id);
+      DB::commit();
       return [
         'resultMessage' => 'SUCCESS',
         'resultCode' => 200
       ];
     } catch (\Exception $exception) {
+      DB::rollBack();
       return [
         'resultMessage' => $exception->getMessage(),
         'resultCode' => 500,
@@ -105,7 +112,7 @@ class ProductService
       $this->productRepository->create($product_data);
 
       if (!empty($data['files']) && !empty($data['originFiles'])) {
-
+        $this->productFileRepository->storeFile($data['files'],$data['originFiles'],$product->product_id);
       }
 
       DB::commit();
