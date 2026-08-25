@@ -18,7 +18,7 @@ class Notice extends Model
     'contents',
     'category',
     'status',
-    'user_id',
+    'admin_id',
     'created_at',
     'updated_at',
     'hits'
