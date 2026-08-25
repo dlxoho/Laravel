@@ -22,7 +22,7 @@ class NoticeRepositoryImpl implements NoticeRepository
   {
     $rows = Notice::from('notice as n')
       ->join('user as u', 'u.user_id', 'n.user_id')
-      ->select('n.*, u.name, u.userID');
+      ->select('n.*', 'u.name', 'u.userID');
 
     if ($data && isset($data['title'])) {
       $rows = $rows->where('n.title', 'like', '%' . $data['title'] . '%');

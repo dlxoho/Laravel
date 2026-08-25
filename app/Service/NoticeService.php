@@ -24,13 +24,13 @@ class NoticeService
     $this->noticeFileRepository = $noticeFileRepository;
   }
 
-  public final function storeNoticeWithFiles(array $data)
+  public function storeNoticeWithFiles(array $data)
   {
     DB::beginTransaction();
     try {
       $notice_data = [
         'title' => $data['title'],
-        'content' => $data['content'],
+        'contents' => $data['content'],
         'user_id' => Auth::id(),
         'created_at' => now(),
       ];
@@ -54,21 +54,22 @@ class NoticeService
     }
   }
 
-  public final function getNotices(array $data)
+  public function getNotices(array $data)
   {
     return $this->noticeRepository->list($data);
   }
 
-  public final function modifyNotice(Notice $notice, array $data)
+  public function modifyNotice(Notice $notice, array $data)
   {
     DB::beginTransaction();
     try {
-      $notice->update([
+      $data = [
         'title' => $data['title'],
-        'content' => $data['content'],
+        'contents' => $data['content'],
         'updated_at' => now()
-      ]);
-      $this->deleteNoticeFiles($notice->notice_id);
+      ];
+      $this->noticeRepository->update($data, $notice->notice_id);
+      $this->noticeFileRepository->deleteFiles($notice->notice_id);
       DB::commit();
       return [
         'resultMessage' => 'SUCCESS',
@@ -83,7 +84,7 @@ class NoticeService
     }
   }
 
-  public final function delete(Notice $notice)
+  public function delete(Notice $notice)
   {
     DB::beginTransaction();
     try {
@@ -103,7 +104,7 @@ class NoticeService
     }
   }
 
-  public final function show(Notice $notice)
+  public function show(Notice $notice)
   {
     try {
       $noticeFiles = $this->noticeRepository->show($notice->notice_id);
@@ -123,7 +124,7 @@ class NoticeService
     }
   }
 
-  public final function addHit(Notice $notice)
+  public function addHit(Notice $notice)
   {
     try {
       $this->noticeRepository->addHit($notice->notice_id);
