@@ -55,9 +55,8 @@ class NoticeRepositoryImpl implements NoticeRepository
     return Notice::with('noticeFiles')->find($notice_id);
   }
 
-  public function addHit(int $notice_id)
+  public function addHit(Notice $notice)
   {
-    $notice = Notice::find($notice_id);
     return $notice->increment('hits');
   }
 }

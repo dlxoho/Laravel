@@ -26,8 +26,7 @@ class NoticeService
 
   public function storeNoticeWithFiles(array $data)
   {
-    DB::beginTransaction();
-    try {
+    return DB::transaction(function () use ($data) {
       $notice_data = [
         'title' => $data['title'],
         'contents' => $data['content'],
@@ -39,19 +38,7 @@ class NoticeService
       if (!empty($data['files']) && !empty($data['originFiles'])) {
         $this->noticeFileRepository->storeFile($data['files'], $data['originFiles'], $notice->notice_id);
       }
-
-      DB::commit();
-      return [
-        'resultMessage' => 'SUCCESS',
-        'resultCode' => 201
-      ];
-    } catch (\Exception $e) {
-      DB::rollBack();
-      return [
-        'resultMessage' => $e->getMessage(),
-        'resultCode' => 500
-      ];
-    }
+    });
   }
 
   public function getNotices(array $data)
@@ -61,82 +48,32 @@ class NoticeService
 
   public function modifyNotice(Notice $notice, array $data)
   {
-    DB::beginTransaction();
-    try {
-      $data = [
+    return DB::transaction(function () use ($notice, $data) {
+      $dataArr = [
         'title' => $data['title'],
         'contents' => $data['content'],
         'updated_at' => now()
       ];
-      $this->noticeRepository->update($data, $notice->notice_id);
+      $this->noticeRepository->update($dataArr, $notice->notice_id);
       $this->noticeFileRepository->deleteFiles($notice->notice_id);
-      DB::commit();
-      return [
-        'resultMessage' => 'SUCCESS',
-        'resultCode' => 200
-      ];
-    } catch (\Exception $e) {
-      DB::rollBack();
-      return [
-        'resultMessage' => $e->getMessage(),
-        'resultCode' => 500
-      ];
-    }
+    });
   }
 
   public function delete(Notice $notice)
   {
-    DB::beginTransaction();
-    try {
+    return DB::transaction(function () use ($notice) {
       $this->noticeRepository->delete($notice->notice_id);
       $this->noticeFileRepository->deleteFiles($notice->notice_id);
-      DB::commit();
-      return [
-        'resultMessage' => 'SUCCESS',
-        'resultCode' => 200
-      ];
-    } catch (\Exception $e) {
-      DB::rollBack();
-      return [
-        'resultMessage' => $e->getMessage(),
-        'resultCode' => 500
-      ];
-    }
+    });
   }
 
   public function show(Notice $notice)
   {
-    try {
-      $noticeFiles = $this->noticeRepository->show($notice->notice_id);
-      return [
-        'resultMessage' => 'SUCCESS',
-        'data' => [
-          'files' => $noticeFiles,
-          'notice' => $notice
-        ],
-        'resultCode' => 200
-      ];
-    } catch (\Exception $e) {
-      return [
-        'resultMessage' => $e->getMessage(),
-        'resultCode' => 404
-      ];
-    }
+    return $this->noticeRepository->show($notice->notice_id);
   }
 
   public function addHit(Notice $notice)
   {
-    try {
-      $this->noticeRepository->addHit($notice->notice_id);
-      return [
-        'resultMessage' => 'SUCCESS',
-        'resultCode' => 200
-      ];
-    } catch (\Exception $e) {
-      return [
-        'resultMessage' => $e->getMessage(),
-        'resultCode' => 500
-      ];
-    }
+    return $this->noticeRepository->addHit($notice);
   }
 }

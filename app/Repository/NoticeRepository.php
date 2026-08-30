@@ -11,5 +11,5 @@ interface NoticeRepository
   public function list(array $data);
   public function delete(int $notice_id);
   public function show(int $notice_id);
-  public function addHit(int $notice_id);
+  public function addHit(Notice $notice);
 }
